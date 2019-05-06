@@ -277,6 +277,13 @@ class Signer
     set_namespace_for_node(issuer_name_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(issuer_number_node, DS_NAMESPACE, ds_namespace_prefix)
 
+
+    set_namespace_for_node(key_name_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(modulus_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(exponent_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(res_key_value_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(key_value_node, DS_NAMESPACE, ds_namespace_prefix)
+
     data_node
   end
 
@@ -309,7 +316,7 @@ class Signer
       id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       unless id.to_s.empty?
         wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
-        target_node["#{wsu_ns}:Id"] = id.to_s
+        target_node["#{wsu_ns}:Id"] = id.to_s if options[:id].blank?
       end
     elsif target_node['Id'].nil?
       id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
