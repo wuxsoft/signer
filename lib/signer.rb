@@ -223,8 +223,8 @@ class Signer
   #   </X509Data>
   # </SecurityTokenReference> (optional)
   # </KeyInfo>
-  def x509_data_node(issuer_in_security_token = false)
-    issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
+  def x509_data_node(issuer_in_security_token = false, rsa_key_value = false)
+    issuer_name_node = Nokogiri::XML::Node.new('X509IssuerName', document)
     issuer_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::RFC2253)
 
     issuer_number_node = Nokogiri::XML::Node.new('X509SerialNumber', document)
@@ -234,10 +234,10 @@ class Signer
     issuer_serial_node.add_child(issuer_name_node)
     issuer_serial_node.add_child(issuer_number_node)
 
-    cetificate_node    = Nokogiri::XML::Node.new('X509Certificate', document)
+    cetificate_node = Nokogiri::XML::Node.new('X509Certificate', document)
     cetificate_node.content = Base64.encode64(cert.to_der).delete("\n")
 
-    data_node          = Nokogiri::XML::Node.new('X509Data', document)
+    data_node = Nokogiri::XML::Node.new('X509Data', document)
     data_node.add_child(issuer_serial_node)
     data_node.add_child(cetificate_node)
 
@@ -246,9 +246,27 @@ class Signer
       security_token_reference_node.add_child(data_node)
     end
 
-    key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
+    key_info_node = Nokogiri::XML::Node.new('KeyInfo', document)
     key_info_node.add_child(issuer_in_security_token ? security_token_reference_node : data_node)
+    if rsa_key_value
+      key_name_node = Nokogiri::XML::Node.new('KeyName', document)
+      key_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::RFC2253)
+      key_info_node.add_child(key_name_node)
 
+      modulus_node = Nokogiri::XML::Node.new('Modulus', document)
+      modulus_node.content = Base64.encode64(private_key.public_key.params["n"].to_s(16)).delete("\n")
+
+      exponent_node = Nokogiri::XML::Node.new('Exponent', document)
+      exponent_node.content = Base64.encode64(private_key.public_key.params["e"].to_s(2)).delete("\n")
+
+      res_key_value_node = Nokogiri::XML::Node.new('RSAKeyValue', document)
+      res_key_value_node.add_child(modulus_node)
+      res_key_value_node.add_child(exponent_node)
+
+      key_value_node = Nokogiri::XML::Node.new('KeyValue', document)
+      key_value_node.add_child(res_key_value_node)
+      key_info_node.add_child(key_value_node)
+    end
     signed_info_node.add_next_sibling(key_info_node)
 
     set_namespace_for_node(key_info_node, DS_NAMESPACE, ds_namespace_prefix)
@@ -347,7 +365,7 @@ class Signer
     end
 
     if options[:issuer_serial]
-      x509_data_node(options[:issuer_in_security_token])
+      x509_data_node(options[:issuer_in_security_token], options[:rsa_key_value])
     end
 
     if options[:inclusive_namespaces]
