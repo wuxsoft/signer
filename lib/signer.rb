@@ -316,7 +316,7 @@ class Signer
       id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       unless id.to_s.empty?
         wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
-        target_node["#{wsu_ns}:Id"] = id.to_s unless node.attributes["id"]&.value == options[:id]
+        target_node["#{wsu_ns}:Id"] = id.to_s unless target_node.attributes["id"]&.value == options[:id]
       end
     elsif target_node['Id'].nil?
       id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
