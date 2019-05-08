@@ -197,8 +197,8 @@ class Signer
       node.content = Base64.encode64(cert.to_der).gsub("\n", '')
       signature_node.add_previous_sibling(node)
       wsse_ns = namespace_prefix(node, WSSE_NAMESPACE, 'wsse')
-      wsu_ns = namespace_prefix(node, WSU_NAMESPACE, 'wsu')
-      node["#{wsu_ns}:Id"] = security_token_id
+      # wsu_ns = namespace_prefix(node, WSU_NAMESPACE, 'wsu')
+      # node["#{wsu_ns}:Id"] = security_token_id
       key_info_node = Nokogiri::XML::Node.new('KeyInfo', document)
       security_token_reference_node = Nokogiri::XML::Node.new("#{wsse_ns}:SecurityTokenReference", document)
       key_info_node.add_child(security_token_reference_node)
@@ -225,7 +225,7 @@ class Signer
   # </KeyInfo>
   def x509_data_node(issuer_in_security_token = false, rsa_key_value = false)
     issuer_name_node = Nokogiri::XML::Node.new('X509IssuerName', document)
-    issuer_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::RFC2253)
+    issuer_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::COMPAT)
 
     issuer_number_node = Nokogiri::XML::Node.new('X509SerialNumber', document)
     issuer_number_node.content = cert.serial
@@ -250,7 +250,7 @@ class Signer
     key_info_node.add_child(issuer_in_security_token ? security_token_reference_node : data_node)
     if rsa_key_value
       key_name_node = Nokogiri::XML::Node.new('KeyName', document)
-      key_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::RFC2253)
+      key_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::COMPAT)
       key_info_node.add_child(key_name_node)
 
       modulus_node = Nokogiri::XML::Node.new('Modulus', document)
@@ -277,12 +277,13 @@ class Signer
     set_namespace_for_node(issuer_name_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(issuer_number_node, DS_NAMESPACE, ds_namespace_prefix)
 
-
-    set_namespace_for_node(key_name_node, DS_NAMESPACE, ds_namespace_prefix)
-    set_namespace_for_node(modulus_node, DS_NAMESPACE, ds_namespace_prefix)
-    set_namespace_for_node(exponent_node, DS_NAMESPACE, ds_namespace_prefix)
-    set_namespace_for_node(res_key_value_node, DS_NAMESPACE, ds_namespace_prefix)
-    set_namespace_for_node(key_value_node, DS_NAMESPACE, ds_namespace_prefix)
+    if rsa_key_value
+      set_namespace_for_node(key_name_node, DS_NAMESPACE, ds_namespace_prefix)
+      set_namespace_for_node(modulus_node, DS_NAMESPACE, ds_namespace_prefix)
+      set_namespace_for_node(exponent_node, DS_NAMESPACE, ds_namespace_prefix)
+      set_namespace_for_node(res_key_value_node, DS_NAMESPACE, ds_namespace_prefix)
+      set_namespace_for_node(key_value_node, DS_NAMESPACE, ds_namespace_prefix)
+    end
 
     data_node
   end
@@ -311,12 +312,12 @@ class Signer
 
   def digest!(target_node, options = {})
     if wss?
-      wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
-      current_id = target_node["#{wsu_ns}:Id"] if wsu_ns
+      # wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
+      # current_id = target_node["#{wsu_ns}:Id"] if wsu_ns
       id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       unless id.to_s.empty?
-        wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
-        target_node["#{wsu_ns}:Id"] = id.to_s unless target_node.attributes["id"]&.value == options[:id]
+        # wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
+        # target_node["#{wsu_ns}:Id"] = id.to_s unless target_node.attributes["id"]&.value == options[:id]
       end
     elsif target_node['Id'].nil?
       id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
@@ -330,7 +331,7 @@ class Signer
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
     reference_node['URI'] = id.to_s.size > 0 ? "##{id}" : ""
-    reference_node['Type'] = options[:ref_type] if options[:ref_type]
+    # reference_node['Type'] = options[:ref_type] if options[:ref_type]
 
     signed_info_node.add_child(reference_node)
     set_namespace_for_node(reference_node, DS_NAMESPACE, ds_namespace_prefix)
