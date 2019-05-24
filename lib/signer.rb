@@ -254,10 +254,12 @@ class Signer
       key_info_node.add_child(key_name_node)
 
       modulus_node = Nokogiri::XML::Node.new('Modulus', document)
-      modulus_node.content = Base64.encode64(private_key.public_key.params["n"].to_s(16)).delete("\n")
+      # modulus_node.content = Base64.encode64(private_key.public_key.params["n"].to_s(16)).delete("\n")
+      modulus_node.content = Base64.encode64(cert.public_key.params["n"].to_s(2)).delete("\n")
 
       exponent_node = Nokogiri::XML::Node.new('Exponent', document)
-      exponent_node.content = Base64.encode64(private_key.public_key.params["e"].to_s(2)).delete("\n")
+      # exponent_node.content = Base64.encode64(private_key.public_key.params["e"].to_s(2)).delete("\n")
+      exponent_node.content = Base64.encode64(cert.public_key.params["e"].to_s(2)).delete("\n")
 
       res_key_value_node = Nokogiri::XML::Node.new('RSAKeyValue', document)
       res_key_value_node.add_child(modulus_node)
