@@ -14,6 +14,7 @@ class Signer
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'.freeze
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'.freeze
   DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'.freeze
+  # DS_NAMESPACE = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'.freeze
 
   SIGNATURE_ALGORITHM = {
     # SHA 1
